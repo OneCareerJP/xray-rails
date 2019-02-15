@@ -32,5 +32,73 @@ describe Xray::Engine do
       expect(subject.render(*xray_disabled_render_args)).to eql(plain_text_result)
     end
   end
+
+  context 'ActionView::ViewPaths monkeypatch' do
+    context 'on adding single variant path' do
+      let(:view_path_arg) { Rails.root.join('app', 'views', 'variant_1') }
+
+      context '#append_view_path' do
+        subject { Xray.request_info[:view_paths][:append] }
+
+        it 'should append additional view paths to Xray.request_info[:view_paths][:append]' do
+          ActionView::ViewPaths.should_receive(:append_view_path_with_xray).with(view_path_arg)
+          ActionController::Base.new.append_view_path view_path_arg
+          is_expected.to include(view_path_arg)
+        end
+      end
+      context '#prepend_view_path' do
+        subject { Xray.request_info[:view_paths][:prepend] }
+
+        it 'should append additional view paths to Xray.request_info[:view_paths][:prepend]' do
+          ActionView::ViewPaths.should_receive(:prepend_view_path_with_xray).with(view_path_arg)
+          ActionView::ViewPaths.should_receive(:prepend_view_path).with(view_path_arg)
+          ActionView::ViewPaths.prepend_view_path(view_path_arg)
+          puts ActionView::ViewPaths.view_paths
+          is_expected.to include(view_path_arg)
+        end
+      end
+
+      context '#append_view_path_without_xray' do
+        subject { Xray.request_info[:view_paths][:append] }
+
+        it 'should not append additional view paths to the subject' do
+          ActionController::Base.new.append_view_path_without_xray view_path_arg
+          is_expected.not_to include(view_path_arg)
+        end
+      end
+      context '#prepend_view_path_without_xray' do
+        subject { Xray.request_info[:view_paths][:prepend] }
+
+        it 'should not append additional view paths to the subject' do
+          ActionController::Base.new.prepend_view_path_without_xray view_path_arg
+          is_expected.not_to include(view_path_arg)
+        end
+      end
+    end
+
+    context 'on adding arrayed variant path' do
+      let(:view_path_arg) { [Rails.root.join('app', 'views', 'variant_1'), Rails.root.join('app', 'views', 'variant_2')] }
+
+      context '#append_view_path' do
+        subject { Xray.request_info[:view_paths][:append] }
+
+        it 'should append additional view paths to Xray.request_info[:view_paths][:append]' do
+          ActionView::ViewPaths.should_receive(:append_view_path_with_xray).with(view_path_arg)
+          ActionController::Base.new.append_view_path view_path_arg
+          is_expected.to include(*view_path_arg)
+        end
+      end
+      context '#prepend_view_path' do
+        subject { Xray.request_info[:view_paths][:prepend] }
+
+        it 'should prepend additional view paths to Xray.request_info[:view_paths][:prepend]' do
+          ActionView::ViewPaths.should_receive(:prepend_view_path_with_xray).with(view_path_arg)
+          ActionView::ViewPaths.should_receive(:prepend_view_path).with(view_path_arg)
+          ActionView::ViewPaths.prepend_view_path view_path_arg
+          is_expected.to include(*view_path_arg)
+        end
+      end
+    end
+  end
 end
 
